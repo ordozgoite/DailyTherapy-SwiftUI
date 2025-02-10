@@ -6,12 +6,10 @@
 //
 
 import Foundation
-import CoreData
 
-@objc(Answer)
-class Answer: NSManagedObject {
-    @NSManaged var id: UUID
-    @NSManaged var questionText: String
-    @NSManaged var answerText: String
-    @NSManaged var date: Date
+struct ManagedAnswer { // Mudar nome?
+    let id = UUID()
+    let answerText: String
+    let questionTag: Int
+    let date: Date
 }

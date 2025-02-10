@@ -95,28 +95,29 @@ struct MenuScreen: View {
     }
     
     private func hasAnsweredTodaysQuestionary(inThe timeOfDay: TimeOfDay) -> Bool {
-        let context = CoreDataManager.shared.context
-        let request = NSFetchRequest<Answer>(entityName: "Answer") // Correção aqui
-        
-        // Obtem a data atual sem a parte da hora
-        let calendar = Calendar.current
-        let today = calendar.startOfDay(for: Date())
-        
-        // Filtra apenas respostas do dia atual e do período (manhã/noite)
-        request.predicate = NSPredicate(
-            format: "date >= %@ AND date < %@ AND timeOfDay == %@",
-            today as NSDate,
-            calendar.date(byAdding: .day, value: 1, to: today)! as NSDate,
-            timeOfDay.title
-        )
-        
-        do {
-            let answers = try context.fetch(request)
-            return !answers.isEmpty
-        } catch {
-            print("Erro ao buscar respostas de hoje: \(error)")
-            return false
-        }
+//        let context = CoreDataManager.shared.context
+//        let request = NSFetchRequest<Answer>(entityName: "Answer") // Correção aqui
+//        
+//        // Obtem a data atual sem a parte da hora
+//        let calendar = Calendar.current
+//        let today = calendar.startOfDay(for: Date())
+//        
+//        // Filtra apenas respostas do dia atual e do período (manhã/noite)
+//        request.predicate = NSPredicate(
+//            format: "date >= %@ AND date < %@ AND timeOfDay == %@",
+//            today as NSDate,
+//            calendar.date(byAdding: .day, value: 1, to: today)! as NSDate,
+//            timeOfDay.title
+//        )
+//        
+//        do {
+//            let answers = try context.fetch(request)
+//            return !answers.isEmpty
+//        } catch {
+//            print("Erro ao buscar respostas de hoje: \(error)")
+//            return false
+//        }
+        return false
     }
 
 

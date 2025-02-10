@@ -11,6 +11,7 @@ import Foundation
 class QuestionViewModel: ObservableObject {
     
     @Published var currentQuestions: [Question] = []
+    @Published var answers: [String] = ["", "", ""]
     
     func loadQuestions(for timeOfDay: TimeOfDay) {
         switch timeOfDay {
@@ -19,5 +20,9 @@ class QuestionViewModel: ObservableObject {
         case .night:
             currentQuestions = DailyQuestions.night
         }
+    }
+    
+    func areInputsValid() -> Bool {
+        return !answers.contains(where: { $0.isEmpty })
     }
 }

@@ -6,12 +6,14 @@
 //
 
 import SwiftUI
+import CoreData
 
 struct QuestionScreen: View {
     
+    @Environment(\.managedObjectContext) var moc
     @StateObject private var questionVM = QuestionViewModel()
-    @State private var answers: [UUID: String] = [:]
     @FocusState private var isDescriptionTextFieldFocused: Bool
+    @Environment(\.dismiss) private var dismiss
     
     var timeOfDay: TimeOfDay
     
@@ -51,34 +53,35 @@ struct QuestionScreen: View {
                 .font(.title3)
                 .foregroundColor(.gray)
             
-            TextField("Digite sua resposta...", text: Binding(
-                get: { answers[question.id] ?? "" },
-                set: { newValue in
-                    if newValue.last == "\n" {
+            TextField(
+                "Digite sua resposta...",
+                text: $questionVM.answers[getIndex(fromQuestionTag: question.tag)],
+                axis: .vertical
+            )
+                .lineLimit(3...3)
+                .textFieldStyle(.plain)
+                .padding(.bottom, 10)
+                .focused($isDescriptionTextFieldFocused)
+                .onReceive(questionVM.answers[getIndex(fromQuestionTag: question.tag)].publisher.last()) {
+                    if ($0 as Character).asciiValue == 10 {
                         isDescriptionTextFieldFocused = false
-                    } else {
-                        answers[question.id] = newValue
+                        questionVM.answers[getIndex(fromQuestionTag: question.tag)].removeLast()
                     }
                 }
-            ), axis: .vertical)
-            .lineLimit(3...3)
-            .textFieldStyle(.plain)
-            .padding(.bottom, 10)
-            .focused($isDescriptionTextFieldFocused)
         }
         .padding()
         .background(Color(.systemGray6))
         .cornerRadius(12)
     }
-
+    
     
     // MARK: - Button
     
     @ViewBuilder
     private func SubmitButton() -> some View {
         Button {
-            saveAnswers()
-            // TODO: Dismiss Screen
+            persistAnswers()
+            dismiss()
         } label: {
             Text("Salvar Respostas")
                 .font(.title3)
@@ -86,19 +89,41 @@ struct QuestionScreen: View {
                 .foregroundColor(.white)
                 .frame(maxWidth: .infinity)
                 .padding()
-                .background(Color.blue)
+                .background(questionVM.areInputsValid() ? .blue : .gray)
                 .cornerRadius(12)
                 .padding(.horizontal)
         }
+        .disabled(!questionVM.areInputsValid())
     }
     
     // MARK: - Private Methods
     
-    private func saveAnswers() {
-        for (questionID, answerText) in answers {
-            if let question = questionVM.currentQuestions.first(where: { $0.id == questionID }) {
-                CoreDataManager.shared.saveAnswer(question: question.text, answer: answerText)
-            }
+    private func getIndex(fromQuestionTag tag: Int) -> Int {
+        return switch timeOfDay {
+        case .morning:
+            tag - 1
+        case .night:
+            tag - 4
+        }
+    }
+    
+    private func getQuestionTag(fromIndex index: Int) -> Int {
+        return timeOfDay == .morning ? index : index + 3
+    }
+    
+    private func persistAnswers() {
+        for i in  1...3 {
+            let tag = getQuestionTag(fromIndex: i)
+            
+            let answerText = questionVM.answers[getIndex(fromQuestionTag: tag)]
+            
+            let newAnswer = Answer(context: moc)
+            newAnswer.id = UUID()
+            newAnswer.text = answerText
+            newAnswer.questionTag = Int16(tag)
+            newAnswer.date = Date()
+            
+            try? moc.save()
         }
     }
 }
