@@ -18,6 +18,16 @@ struct MenuScreen: View {
                 
                 QuestionaryView(.night)
             }
+            .toolbar {
+                ToolbarItem(placement: .topBarTrailing) {
+                    NavigationLink {
+                        Text("Notification Screen")
+                    } label: {
+                        Image(systemName: "slider.horizontal.3")
+                    }
+
+                }
+            }
             .navigationTitle("Reflexão Diária 📖")
         }
     }

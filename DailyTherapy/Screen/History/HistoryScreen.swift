@@ -54,15 +54,20 @@ struct HistoryScreen: View {
                     .fontWeight(.bold)
                     .padding(.bottom)
                 
-                ForEach(answersForSelectedDate.filter { $0.questionTag <= 3 }) { answer in
-                    AnswerDisplayView(
-                        questionText: DailyQuestions.morning[getIndex(fromQuestionTag: Int(answer.questionTag), andTimeOfDay: .morning)].text,
-                        answerText: answer.text ?? "Não Repondido"
-                    )
+                if hasAnsweredQuestions(inThe: .morning) {
+                    ForEach(answersForSelectedDate.filter { $0.questionTag <= 3 }) { answer in
+                        AnswerDisplayView(
+                            questionText: DailyQuestions.morning[getIndex(fromQuestionTag: Int(answer.questionTag), andTimeOfDay: .morning)].text,
+                            answerText: answer.text ?? "Não Repondido"
+                        )
+                    }
+                } else {
+                    Text("Você não respondeu esse questionário.")
+                        .fontWeight(.thin)
                 }
-                
             }
             .padding()
+            .frame(width: screenWidth - 32)
             .background(Color(.systemGray6))
             .cornerRadius(12)
             
@@ -72,15 +77,20 @@ struct HistoryScreen: View {
                     .fontWeight(.bold)
                     .padding(.bottom)
                 
-                ForEach(answersForSelectedDate.filter { $0.questionTag > 3 }) { answer in
-                    AnswerDisplayView(
-                        questionText: DailyQuestions.night[getIndex(fromQuestionTag: Int(answer.questionTag), andTimeOfDay: .night)].text,
-                        answerText: answer.text ?? "Não Repondido"
-                    )
+                if hasAnsweredQuestions(inThe: .night) {
+                    ForEach(answersForSelectedDate.filter { $0.questionTag > 3 }) { answer in
+                        AnswerDisplayView(
+                            questionText: DailyQuestions.night[getIndex(fromQuestionTag: Int(answer.questionTag), andTimeOfDay: .night)].text,
+                            answerText: answer.text ?? "Não Repondido"
+                        )
+                    }
+                } else {
+                    Text("Você não respondeu esse questionário.")
+                        .fontWeight(.thin)
                 }
-                
             }
             .padding()
+            .frame(width: screenWidth - 32)
             .background(Color(.systemGray6))
             .cornerRadius(12)
         }
@@ -106,12 +116,7 @@ struct HistoryScreen: View {
     private func fetchAnswers() {
         let fetchedAnswers = getAnswers(for: selectedDate)
         answersForSelectedDate = fetchedAnswers
-        print(fetchedAnswers) // Imprime o array no console
     }
-    
-//    private func getTimeOfDay(forQuestionTag tag: Int) -> TimeOfDay {
-//        return tag <= 3 ? .morning : .night
-//    }
     
     private func getAnswers(for date: Date) -> [Answer] {
         let calendar = Foundation.Calendar.current
@@ -130,6 +135,17 @@ struct HistoryScreen: View {
             return []
         }
     }
+    
+    private func hasAnsweredQuestions(inThe timeOfDay: TimeOfDay) -> Bool {
+        let filteredAnswers: [Answer]
+        if timeOfDay == .morning {
+            filteredAnswers = answersForSelectedDate.filter { $0.questionTag <= 3 }
+        } else {
+            filteredAnswers = answersForSelectedDate.filter { $0.questionTag > 3 }
+        }
+        return filteredAnswers.count == 3 && !filteredAnswers.contains(where: { ($0.text ?? "").isEmpty })
+    }
+
     
     private func getIndex(fromQuestionTag tag: Int, andTimeOfDay timeOfDay: TimeOfDay) -> Int {
         return switch timeOfDay {
