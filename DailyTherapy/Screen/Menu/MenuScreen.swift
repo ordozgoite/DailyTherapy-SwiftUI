@@ -21,7 +21,7 @@ struct MenuScreen: View {
             .toolbar {
                 ToolbarItem(placement: .topBarTrailing) {
                     NavigationLink {
-                        Text("Notification Screen")
+                        SettingScreen()
                     } label: {
                         Image(systemName: "slider.horizontal.3")
                     }
