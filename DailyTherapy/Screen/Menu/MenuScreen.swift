@@ -9,6 +9,9 @@ import SwiftUI
 import CoreData
 
 struct MenuScreen: View {
+    
+    @Environment(\.managedObjectContext) var moc
+    
     var body: some View {
         NavigationStack {
             VStack(spacing: 32) {
@@ -105,32 +108,37 @@ struct MenuScreen: View {
     }
     
     private func hasAnsweredTodaysQuestionary(inThe timeOfDay: TimeOfDay) -> Bool {
-//        let context = CoreDataManager.shared.context
-//        let request = NSFetchRequest<Answer>(entityName: "Answer") // Correção aqui
-//        
-//        // Obtem a data atual sem a parte da hora
-//        let calendar = Calendar.current
-//        let today = calendar.startOfDay(for: Date())
-//        
-//        // Filtra apenas respostas do dia atual e do período (manhã/noite)
-//        request.predicate = NSPredicate(
-//            format: "date >= %@ AND date < %@ AND timeOfDay == %@",
-//            today as NSDate,
-//            calendar.date(byAdding: .day, value: 1, to: today)! as NSDate,
-//            timeOfDay.title
-//        )
-//        
-//        do {
-//            let answers = try context.fetch(request)
-//            return !answers.isEmpty
-//        } catch {
-//            print("Erro ao buscar respostas de hoje: \(error)")
-//            return false
-//        }
-        return false
+        let todaysAnswers = getAnswers(for: Date())
+        return hasAnswered(todaysAnswers, inThe: timeOfDay)
     }
 
-
+    private func getAnswers(for date: Date) -> [Answer] {
+        let calendar = Foundation.Calendar.current
+        let startOfDay = calendar.startOfDay(for: date)
+        guard let endOfDay = calendar.date(byAdding: .day, value: 1, to: startOfDay) else {
+            return []
+        }
+        
+        let request: NSFetchRequest<Answer> = Answer.fetchRequest()
+        request.predicate = NSPredicate(format: "date >= %@ AND date < %@", startOfDay as NSDate, endOfDay as NSDate)
+        
+        do {
+            return try moc.fetch(request)
+        } catch {
+            print("Erro ao buscar respostas: \(error.localizedDescription)")
+            return []
+        }
+    }
+    
+    private func hasAnswered(_ answers: [Answer], inThe timeOfDay: TimeOfDay) -> Bool {
+        let filteredAnswers: [Answer]
+        if timeOfDay == .morning {
+            filteredAnswers = answers.filter { $0.questionTag <= 3 }
+        } else {
+            filteredAnswers = answers.filter { $0.questionTag > 3 }
+        }
+        return filteredAnswers.count == 3 && !filteredAnswers.contains(where: { ($0.text ?? "").isEmpty })
+    }
 }
 
 #Preview {
