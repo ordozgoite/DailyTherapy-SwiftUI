@@ -17,7 +17,7 @@ struct MainTabView: View {
             
             HistoryScreen()
                 .tabItem {
-                    Label("Histórico", systemImage: "clock.arrow.trianglehead.counterclockwise.rotate.90")
+                    Label("Histórico", systemImage: "calendar")
                 }
         }
     }

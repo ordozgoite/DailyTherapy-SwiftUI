@@ -11,7 +11,11 @@ import CoreData
 struct MenuScreen: View {
     
     @Environment(\.managedObjectContext) var moc
-    
+    @FetchRequest(entity: Answer.entity(),
+                  sortDescriptors: [],
+                  predicate: NSPredicate(format: "date >= %@ AND date < %@", Calendar.current.startOfDay(for: Date()) as NSDate, Calendar.current.date(byAdding: .day, value: 1, to: Calendar.current.startOfDay(for: Date()))! as NSDate))
+    private var todaysAnswers: FetchedResults<Answer>
+
     var body: some View {
         NavigationStack {
             VStack(spacing: 32) {
@@ -28,7 +32,6 @@ struct MenuScreen: View {
                     } label: {
                         Image(systemName: "slider.horizontal.3")
                     }
-
                 }
             }
             .navigationTitle("Reflexão Diária 📖")
@@ -108,28 +111,9 @@ struct MenuScreen: View {
     }
     
     private func hasAnsweredTodaysQuestionary(inThe timeOfDay: TimeOfDay) -> Bool {
-        let todaysAnswers = getAnswers(for: Date())
-        return hasAnswered(todaysAnswers, inThe: timeOfDay)
+        return hasAnswered(Array(todaysAnswers), inThe: timeOfDay)
     }
 
-    private func getAnswers(for date: Date) -> [Answer] {
-        let calendar = Foundation.Calendar.current
-        let startOfDay = calendar.startOfDay(for: date)
-        guard let endOfDay = calendar.date(byAdding: .day, value: 1, to: startOfDay) else {
-            return []
-        }
-        
-        let request: NSFetchRequest<Answer> = Answer.fetchRequest()
-        request.predicate = NSPredicate(format: "date >= %@ AND date < %@", startOfDay as NSDate, endOfDay as NSDate)
-        
-        do {
-            return try moc.fetch(request)
-        } catch {
-            print("Erro ao buscar respostas: \(error.localizedDescription)")
-            return []
-        }
-    }
-    
     private func hasAnswered(_ answers: [Answer], inThe timeOfDay: TimeOfDay) -> Bool {
         let filteredAnswers: [Answer]
         if timeOfDay == .morning {
@@ -140,6 +124,7 @@ struct MenuScreen: View {
         return filteredAnswers.count == 3 && !filteredAnswers.contains(where: { ($0.text ?? "").isEmpty })
     }
 }
+
 
 #Preview {
     MenuScreen()
