@@ -11,11 +11,14 @@ import CoreData
 struct MenuScreen: View {
     
     @Environment(\.managedObjectContext) var moc
-    @FetchRequest(entity: Answer.entity(),
-                  sortDescriptors: [],
-                  predicate: NSPredicate(format: "date >= %@ AND date < %@", Calendar.current.startOfDay(for: Date()) as NSDate, Calendar.current.date(byAdding: .day, value: 1, to: Calendar.current.startOfDay(for: Date()))! as NSDate))
-    private var todaysAnswers: FetchedResults<Answer>
-
+    @State private var currentDate = Date()
+    
+    @FetchRequest(
+        entity: Answer.entity(),
+        sortDescriptors: [],
+        predicate: nil
+    ) private var answers: FetchedResults<Answer> // 🔥 Atualiza automaticamente a UI quando o Core Data mudar
+    
     var body: some View {
         NavigationStack {
             VStack(spacing: 32) {
@@ -35,6 +38,12 @@ struct MenuScreen: View {
                 }
             }
             .navigationTitle("Reflexão Diária 📖")
+            .onAppear(perform: startTimer) // Inicia o timer para detectar mudança de dia
+            .onChange(of: moc) { _ in // 🔥 Observa mudanças no contexto do Core Data
+                DispatchQueue.main.async {
+                    currentDate = Date() // Força atualização ao salvar resposta
+                }
+            }
         }
     }
     
@@ -107,13 +116,24 @@ struct MenuScreen: View {
     private func getTodayDateFormatted() -> String {
         let formatter = DateFormatter()
         formatter.dateFormat = "dd/MM"
-        return formatter.string(from: Date())
+        return formatter.string(from: currentDate)
     }
     
     private func hasAnsweredTodaysQuestionary(inThe timeOfDay: TimeOfDay) -> Bool {
-        return hasAnswered(Array(todaysAnswers), inThe: timeOfDay)
+        let todaysAnswers = getAnswers(for: currentDate) // Usa currentDate atualizado
+        return hasAnswered(todaysAnswers, inThe: timeOfDay)
     }
 
+    private func getAnswers(for date: Date) -> [Answer] {
+        let calendar = Calendar.current
+        let startOfDay = calendar.startOfDay(for: date)
+        guard let endOfDay = calendar.date(byAdding: .day, value: 1, to: startOfDay) else {
+            return []
+        }
+        
+        return answers.filter { $0.date ?? Date() >= startOfDay && $0.date ?? Date() < endOfDay }
+    }
+    
     private func hasAnswered(_ answers: [Answer], inThe timeOfDay: TimeOfDay) -> Bool {
         let filteredAnswers: [Answer]
         if timeOfDay == .morning {
@@ -123,8 +143,22 @@ struct MenuScreen: View {
         }
         return filteredAnswers.count == 3 && !filteredAnswers.contains(where: { ($0.text ?? "").isEmpty })
     }
+    
+    // MARK: - Timer para atualização ao virar o dia
+    
+    private func startTimer() {
+        Timer.scheduledTimer(withTimeInterval: 60, repeats: true) { _ in
+            let newDate = Date()
+            let calendar = Calendar.current
+            
+            if !calendar.isDate(currentDate, inSameDayAs: newDate) {
+                DispatchQueue.main.async {
+                    currentDate = newDate
+                }
+            }
+        }
+    }
 }
-
 
 #Preview {
     MenuScreen()
