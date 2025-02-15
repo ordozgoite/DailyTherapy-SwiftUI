@@ -17,7 +17,7 @@ struct MenuScreen: View {
         entity: Answer.entity(),
         sortDescriptors: [],
         predicate: nil
-    ) private var answers: FetchedResults<Answer> // 🔥 Atualiza automaticamente a UI quando o Core Data mudar
+    ) private var answers: FetchedResults<Answer>
     
     var body: some View {
         NavigationStack {
@@ -37,11 +37,11 @@ struct MenuScreen: View {
                     }
                 }
             }
-            .navigationTitle("Reflexão Diária 📖")
-            .onAppear(perform: startTimer) // Inicia o timer para detectar mudança de dia
-            .onChange(of: moc) { _ in // 🔥 Observa mudanças no contexto do Core Data
+            .navigationTitle("Diário 📖")
+            .onAppear(perform: startTimer)
+            .onChange(of: moc) { _ in
                 DispatchQueue.main.async {
-                    currentDate = Date() // Força atualização ao salvar resposta
+                    currentDate = Date()
                 }
             }
         }

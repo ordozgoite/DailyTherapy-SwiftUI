@@ -12,7 +12,7 @@ struct MainTabView: View {
         TabView {
             MenuScreen()
                 .tabItem {
-                    Label("Responder", systemImage: "square.and.pencil")
+                    Label("Diário", systemImage: "square.and.pencil")
                 }
             
             HistoryScreen()
